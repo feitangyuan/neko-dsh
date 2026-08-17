@@ -38,7 +38,8 @@ function NekoControls() {
     <NekoFace
       scale={SCALE}
       ink="var(--ink)"
-      paper="var(--chrome-hi)"
+      paper="var(--chrome)"
+      sclera="var(--chrome-hi)"
       hoverEyes={[CROSS, PLUS]}
     >
       {EYES.map((eye, index) => (

@@ -18,8 +18,11 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const art = JSON.parse(readFileSync(join(root, "src/kernel/nekoArt.json"), "utf8"));
 
-const INK = [0x1a, 0x1a, 0x1a, 0xff];
-const PAPER = [0xfa, 0xf9, 0xf7, 0xff];
+/* Exactly the pair the empty-state cat is drawn with (--text-main on
+   --bg-surface). A different black or a creamier white here is enough to make
+   the Dock icon read as a different material from the one in the window. */
+const INK = [0x16, 0x16, 0x13, 0xff];
+const PAPER = [0xff, 0xff, 0xff, 0xff];
 const CLEAR = [0, 0, 0, 0];
 
 /** Which cells are the cat at all. */

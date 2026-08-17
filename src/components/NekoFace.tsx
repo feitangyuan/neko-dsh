@@ -21,19 +21,22 @@ interface Props {
   scale: number;
   /** 线条色（轮廓、嘴、眼眶、眼珠） */
   ink: string;
-  /** 面色（脸、眼白） */
+  /** 面色（脸）。取所在背景的颜色，脸就等于隐形，只剩线条——图标和空会话都是这样。 */
   paper: string;
+  /** 眼白。默认跟脸同色；脸要融进底色时（比如条纹标题栏）单给一个白，眼睛才立得住。 */
+  sclera?: string;
   /** 给了就是 hover 时整只眼睛换成这两张 6×6 符号图，左眼一张右眼一张 */
   hoverEyes?: readonly [readonly string[], readonly string[]];
   children?: ReactNode;
 }
 
-export function NekoFace({ scale, ink, paper, hoverEyes, children }: Props) {
+export function NekoFace({ scale, ink, paper, sclera, hoverEyes, children }: Props) {
   const [hover, setHover] = useState(false);
   const [blink, setBlink] = useState(false);
-  const [gaze, setGaze] = useState<[number, number]>([-1, -1]);
+  /* 静止时看正前方——app 图标就是这一帧，两处得对得上 */
+  const [gaze, setGaze] = useState<[number, number]>([0, 0]);
   const ref = useRef<HTMLDivElement>(null);
-  const gazeRef = useRef<[number, number]>([-1, -1]);
+  const gazeRef = useRef<[number, number]>([0, 0]);
 
   /* 眨眼：每 2.6–5s 一次，闭 160ms */
   useEffect(() => {
@@ -72,16 +75,19 @@ export function NekoFace({ scale, ink, paper, hoverEyes, children }: Props) {
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
-  /** 眼睛里的某一半格该是墨还是纸。dy/dx 是 6×6 半格里的坐标。 */
-  const eyeInk = (index: number, dy: number, dx: number): boolean => {
-    if (hover && hoverEyes) return hoverEyes[index][dy][dx] === "#"; // 眼眶也让位给符号
-    if (EYE.frame[dy][dx] === "#") return true; // 眼眶
+  const white = sclera ?? paper;
+
+  /** 眼睛里的某一半格填什么色。dy/dx 是 6×6 半格里的坐标。 */
+  const eyeFill = (index: number, dy: number, dx: number): string => {
+    if (hover && hoverEyes) return hoverEyes[index][dy][dx] === "#" ? ink : paper; // 眼眶也让位给符号
+    if (EYE.frame[dy][dx] === "#") return ink; // 眼眶
     if (EYE.frame[dy][dx] === ".") {
-      if (blink) return dy === 2 || dy === 3; // 闭上的眼睛是一道横线
+      if (blink) return dy === 2 || dy === 3 ? ink : white; // 闭上的眼睛是一道横线
       const [py, px] = pupilAt(gaze);
-      return dy >= py && dy < py + EYE.pupil && dx >= px && dx < px + EYE.pupil;
+      const inPupil = dy >= py && dy < py + EYE.pupil && dx >= px && dx < px + EYE.pupil;
+      return inPupil ? ink : white;
     }
-    return false; // 眼角切掉的那四格：留给脸
+    return paper; // 眼角切掉的那四格：留给脸
   };
 
   /* 整张脸按半格画：一个像素格 = 2×2 半格。头和嘴还是整格填，
@@ -95,15 +101,13 @@ export function NekoFace({ scale, ink, paper, hoverEyes, children }: Props) {
       const eye = EYES.findIndex(
         (e) => cellY >= e.row && cellY < e.row + 3 && cellX >= e.col && cellX < e.col + 3
       );
-      let dark: boolean;
+      let fill: string;
       if (eye !== -1) {
-        dark = eyeInk(eye, y - EYES[eye].row * UNIT, x - EYES[eye].col * UNIT);
-      } else if (RING.has(key) || MOUTH.has(key)) dark = true;
-      else if (SOLID.has(key)) dark = false;
+        fill = eyeFill(eye, y - EYES[eye].row * UNIT, x - EYES[eye].col * UNIT);
+      } else if (RING.has(key) || MOUTH.has(key)) fill = ink;
+      else if (SOLID.has(key)) fill = paper;
       else continue; // 猫外面：透明，让底下的东西透过去
-      cells.push(
-        <rect key={`${y}:${x}`} x={x} y={y} width={1} height={1} fill={dark ? ink : paper} />
-      );
+      cells.push(<rect key={`${y}:${x}`} x={x} y={y} width={1} height={1} fill={fill} />);
     }
   }
 
