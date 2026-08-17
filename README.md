@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src=".github/assets/icon.png" width="120" alt="Neko" />
+<img src=".github/assets/neko.png" width="120" alt="Neko" />
 
 # Neko
 
