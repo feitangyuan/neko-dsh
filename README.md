@@ -4,7 +4,7 @@
 
 # Neko
 
-**把 DeepSeek 官方的 Agent 运行时，装进一台 Mac OS 9 里。**
+**用 Mac OS 9 的风格打开 DeepSeek Harness。**
 
 <img src="https://img.shields.io/badge/macOS-Apple%20Silicon-000000?logo=apple&logoColor=white" alt="macOS" />
 <img src="https://img.shields.io/badge/Tauri-2-24C8DB?logo=tauri&logoColor=white" alt="Tauri" />
