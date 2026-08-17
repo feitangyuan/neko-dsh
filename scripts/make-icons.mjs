@@ -101,33 +101,51 @@ function chunk(type, body) {
   return Buffer.concat([head, body, tail]);
 }
 
+/** The head spans 14 of the canvas's 16 cells, starting one cell in. */
+const INK_CELLS = 14;
+const INK_ORIGIN = 1;
+
 /**
- * `ground` is what fills the cells the cat does not cover.
+ * `ground` fills everything the cat does not cover; `fraction` is how much of
+ * the tile the cat spans.
  *
  * PAPER, not CLEAR, for anything macOS uses as the app icon. macOS 26 treats an
  * icon with transparency as legacy art: it draws its own rounded plate and
- * shrinks the art to ~81% inside it. Ours already reserved a cell of margin, so
- * the cat ended up at 71% of the plate while neighbouring icons filled theirs —
- * measurably smaller in the Dock, and no margin tweak here can win that back.
- * Paint the ground opaque and the system only masks the corners: same tile as
- * everyone else. Measured at 512: ink box 302px -> 360px.
+ * shrinks the art to ~81% inside it, so the cat ended up at 71% of a plate the
+ * neighbours filled. Paint the ground opaque and the system only masks the
+ * corners.
+ *
+ * That leaves the margin to us. Measured against the Dock at 512: every tile is
+ * 412px, and inside it ChatGPT's mark spans 80%, Antigravity's 74%. 0.75 lands
+ * between them. Full bleed reads as cramped, and the corner mask starts eating
+ * the outline.
+ *
+ * The cat block is centred at an integer cell size, so the padding is just more
+ * paper — nearest-neighbour still, no resampler ever touches the art.
  */
-function png(size, ground) {
-  const scale = size / 16;
+function png(size, ground, fraction) {
+  const scale = Math.max(1, Math.round((size * fraction) / INK_CELLS));
+  const block = INK_CELLS * scale;
+  const pad = Math.round((size - block) / 2);
   /* Filter byte 0 (none) in front of every scanline, then RGBA. */
   const raw = Buffer.alloc(size * (1 + size * 4));
   for (let y = 0; y < size; y += 1) {
     const start = y * (1 + size * 4);
     raw[start] = 0;
     for (let x = 0; x < size; x += 1) {
-      const [r, g, b, a] = colorAt(
-        Math.floor(y / scale),
-        Math.floor(x / scale),
-        scale,
-        y % scale,
-        x % scale,
-        ground
-      );
+      const ay = y - pad;
+      const ax = x - pad;
+      const inside = ay >= 0 && ax >= 0 && ay < block && ax < block;
+      const [r, g, b, a] = inside
+        ? colorAt(
+            INK_ORIGIN + Math.floor(ay / scale),
+            INK_ORIGIN + Math.floor(ax / scale),
+            scale,
+            ay % scale,
+            ax % scale,
+            ground
+          )
+        : ground;
       const at = start + 1 + x * 4;
       raw[at] = r;
       raw[at + 1] = g;
@@ -151,16 +169,21 @@ function png(size, ground) {
 const icons = join(root, "src-tauri/icons");
 mkdirSync(icons, { recursive: true });
 
+const TILE = 0.75;
+/* Nothing frames the README image, so there is no tile to sit inside: it keeps
+   the art's own one-cell margin and a transparent ground, which is what reads
+   right on both of GitHub's themes. */
+const BARE = INK_CELLS / 16;
+
 /* The three sizes tauri.conf.json names are the app icon, so they are opaque.
-   icon.png is not bundled — it is the source we hand to the README, where a
-   transparent ground is what looks right on both of GitHub's themes. */
-for (const [name, size, ground] of [
-  ["32x32.png", 32, PAPER],
-  ["128x128.png", 128, PAPER],
-  ["128x128@2x.png", 256, PAPER],
-  ["icon.png", 1024, CLEAR],
+   icon.png is not bundled — it is the source we hand to the README. */
+for (const [name, size, ground, fraction] of [
+  ["32x32.png", 32, PAPER, TILE],
+  ["128x128.png", 128, PAPER, TILE],
+  ["128x128@2x.png", 256, PAPER, TILE],
+  ["icon.png", 1024, CLEAR, BARE],
 ]) {
-  writeFileSync(join(icons, name), png(size, ground));
+  writeFileSync(join(icons, name), png(size, ground, fraction));
 }
 
 const iconset = join(icons, "icon.iconset");
@@ -179,7 +202,7 @@ for (const [base, scale] of [
   [512, 2],
 ]) {
   const name = `icon_${base}x${base}${scale === 2 ? "@2x" : ""}.png`;
-  writeFileSync(join(iconset, name), png(base * scale, PAPER));
+  writeFileSync(join(iconset, name), png(base * scale, PAPER, TILE));
 }
 execFileSync("iconutil", ["-c", "icns", iconset, "-o", join(icons, "icon.icns")]);
 rmSync(iconset, { recursive: true, force: true });
