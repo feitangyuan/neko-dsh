@@ -22,24 +22,9 @@
 
 ---
 
-[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（dsh）是 DeepSeek 官方开源的 Agent 运行时，能力很全，但它是个命令行工具，自带的界面也是一套网页。
-
-Neko 把它整个装进一个复古 Mac 桌面 app：**运行时一行没改**，profile 层叠、插件热插拔、MCP、sandbox 全都在，只是把那套网页换成了像素窗口。
+Neko 把 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（dsh）整个装进一个复古 Mac 桌面 app：**运行时一行没改**，profile 层叠、插件热插拔、MCP、sandbox 全都在，只是把它自带的那套网页换成了像素窗口。
 
 Node、dsh、pnpm 全部随包分发。**下载、拖进应用程序、填一个 API key，就能用了 —— 不需要装 Node，不需要开终端。**
-
-## 🤔 为什么做这个
-
-命令行的 Agent 好用，但有几件事它天生做不了：
-
-- 会话全在终端 buffer 里，翻不回去，也搜不了
-- 花了多少钱只能靠猜 —— DeepSeek 高峰和空闲差一半价，终端不会提醒你
-- 想给它装个插件，得记住命令、记住包名、记住装到哪个 profile
-- 想让它看一张图，得先把图存到磁盘再把路径打出来
-
-这些都不是模型的问题，是没有界面的问题。所以做了这个壳。
-
-至于为什么是 Mac OS 9 的样子 —— 因为好看。
 
 ## ✨ 能做什么
 
