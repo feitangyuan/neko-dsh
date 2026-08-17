@@ -30,41 +30,29 @@ const JOB_STATUS: Record<string, string> = {
   failed: "失败",
 };
 
-/** 一段：左边三角折叠，标题反白计数，展开后是内容 */
-function Section({
+/** 一段的头：三角 + 标题 + 计数。几段的头挤在同一行里。 */
+function SectionHead({
   title,
   count,
   open,
   onToggle,
-  right,
-  children,
 }: {
   title: string;
-  count?: string;
+  count: string;
   open: boolean;
   onToggle: () => void;
-  right?: React.ReactNode;
-  children: React.ReactNode;
 }) {
   return (
-    <div className="border-t border-[var(--border-main)] first:border-t-0">
-      <div className="flex items-center gap-1.5 px-2 py-1">
-        {/* A section head is never smaller than the body under it — 10px mini is
-            for metadata only (counts, timestamps, badges). */}
-        <button
-          onClick={onToggle}
-          className="flex items-baseline gap-1.5 text-[12px] text-[var(--text-dim)] hover:text-[var(--text-main)]"
-        >
-          <span className="inline-block w-[7px] shrink-0 text-center">{open ? "▾" : "▸"}</span>
-          {title}
-          {count !== undefined && (
-            <span className="font-mini text-[10px] tabular-nums">{count}</span>
-          )}
-        </button>
-        {right && <div className="ml-auto flex items-center gap-1">{right}</div>}
-      </div>
-      {open && <div className="px-2 pb-1.5">{children}</div>}
-    </div>
+    /* A section head is never smaller than the body under it — 10px mini is
+       for metadata only (counts, timestamps, badges). */
+    <button
+      onClick={onToggle}
+      className="flex items-baseline gap-1.5 text-[12px] text-[var(--text-dim)] hover:text-[var(--text-main)]"
+    >
+      <span className="inline-block w-[7px] shrink-0 text-center">{open ? "▾" : "▸"}</span>
+      {title}
+      <span className="font-mini text-[10px] tabular-nums">{count}</span>
+    </button>
   );
 }
 
@@ -92,64 +80,36 @@ function MiniButton({
   );
 }
 
-function GoalSection({ kernel, goal }: { kernel: Kernel; goal: GoalState }) {
-  const [open, setOpen] = useState(true);
-  const rounds = goal.maxGoalRounds > 0 ? ` ${goal.roundsStarted}/${goal.maxGoalRounds}` : "";
+function GoalBody({ goal }: { goal: GoalState }) {
   return (
-    <Section
-      title="目标"
-      count={`${PHASE[goal.phase]}${rounds}`}
-      open={open}
-      onToggle={() => setOpen((v) => !v)}
-      right={
-        <>
-          {goal.phase === "active" && <MiniButton onClick={() => kernel.updateGoal("pause")}>暂停</MiniButton>}
-          {goal.phase === "paused" && <MiniButton onClick={() => kernel.updateGoal("resume")}>继续</MiniButton>}
-          {goal.phase !== "complete" && (
-            <MiniButton onClick={() => kernel.updateGoal("complete")}>完成</MiniButton>
-          )}
-          <MiniButton danger onClick={() => kernel.updateGoal("clear")}>
-            清除
-          </MiniButton>
-        </>
-      }
-    >
+    <>
       <div className="text-[12px] leading-relaxed text-[var(--text-main)]">{goal.objective}</div>
       {goal.blockedReason && (
         <div className="pt-0.5 font-mini text-[10px] text-[var(--error)]">{goal.blockedReason}</div>
       )}
-    </Section>
+    </>
   );
 }
 
-function TodoSection({ todos }: { todos: TodoItem[] }) {
-  const [open, setOpen] = useState(true);
-  const done = todos.filter((item) => item.status === "completed").length;
+function TodoBody({ todos }: { todos: TodoItem[] }) {
   return (
-    <Section
-      title="待办"
-      count={`${done}/${todos.length}`}
-      open={open}
-      onToggle={() => setOpen((v) => !v)}
-    >
-      <ul className="space-y-0.5">
-        {todos.map((item, index) => (
-          <li
-            key={`${index}-${item.content}`}
-            className={`flex gap-1.5 text-[12px] leading-snug ${
-              item.status === "completed"
-                ? "text-[var(--text-dim)] line-through"
-                : item.status === "in_progress"
-                  ? "text-[var(--accent)]"
-                  : "text-[var(--text-main)]"
-            }`}
-          >
-            <span className="shrink-0 font-mini text-[10px] leading-[17px]">{TODO_MARK[item.status]}</span>
-            <span className="min-w-0 flex-1">{item.content}</span>
-          </li>
-        ))}
-      </ul>
-    </Section>
+    <ul className="space-y-0.5">
+      {todos.map((item, index) => (
+        <li
+          key={`${index}-${item.content}`}
+          className={`flex gap-1.5 text-[12px] leading-snug ${
+            item.status === "completed"
+              ? "text-[var(--text-dim)] line-through"
+              : item.status === "in_progress"
+                ? "text-[var(--accent)]"
+                : "text-[var(--text-main)]"
+          }`}
+        >
+          <span className="shrink-0 font-mini text-[10px] leading-[17px]">{TODO_MARK[item.status]}</span>
+          <span className="min-w-0 flex-1">{item.content}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -230,18 +190,11 @@ function SubagentBody({ kernel, child }: { kernel: Kernel; child: SubagentEntry 
   );
 }
 
-function SubagentSection({ kernel, subagents }: { kernel: Kernel; subagents: SubagentEntry[] }) {
-  const [open, setOpen] = useState(false);
+function SubagentBodyList({ kernel, subagents }: { kernel: Kernel; subagents: SubagentEntry[] }) {
   const [expanded, setExpanded] = useState<string>("");
-  const running = subagents.filter((child) => child.activity === "running").length;
 
   return (
-    <Section
-      title="子 Agent"
-      count={running > 0 ? `${running} 跑着 / ${subagents.length}` : `${subagents.length}`}
-      open={open}
-      onToggle={() => setOpen((v) => !v)}
-    >
+    <>
       {/* Same row shape as 后台任务 below: label on the left, its metadata
           right-aligned. The disclosure triangle takes the leading slot, so the
           activity marker rides with the trailing text instead of doubling up on
@@ -280,40 +233,31 @@ function SubagentSection({ kernel, subagents }: { kernel: Kernel; subagents: Sub
           </li>
         ))}
       </ul>
-    </Section>
+    </>
   );
 }
 
-function JobSection({ jobs }: { jobs: JobEntry[] }) {
-  const [open, setOpen] = useState(false);
-  const running = jobs.filter((job) => job.status === "running").length;
+function JobBody({ jobs }: { jobs: JobEntry[] }) {
   return (
-    <Section
-      title="后台任务"
-      count={running > 0 ? `${running} 跑着 / ${jobs.length}` : `${jobs.length}`}
-      open={open}
-      onToggle={() => setOpen((v) => !v)}
-    >
-      <ul className="space-y-0.5">
-        {jobs.map((job) => (
-          <li key={job.id} className="flex items-baseline gap-1.5 text-[12px]">
-            <span className="min-w-0 flex-1 truncate text-[var(--text-main)]">{job.label}</span>
-            {job.detail && (
-              <span className="shrink-0 truncate font-mini text-[10px] text-[var(--text-dim)]">{job.detail}</span>
-            )}
-            {/* The status word already says it — a coloured square in front of it
-                was the same fact twice. */}
-            <span
-              className={`shrink-0 font-mini text-[10px] ${
-                job.status === "running" ? "text-[var(--accent)]" : "text-[var(--text-dim)]"
-              }`}
-            >
-              {JOB_STATUS[job.status] ?? job.status}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </Section>
+    <ul className="space-y-0.5">
+      {jobs.map((job) => (
+        <li key={job.id} className="flex items-baseline gap-1.5 text-[12px]">
+          <span className="min-w-0 flex-1 truncate text-[var(--text-main)]">{job.label}</span>
+          {job.detail && (
+            <span className="shrink-0 truncate font-mini text-[10px] text-[var(--text-dim)]">{job.detail}</span>
+          )}
+          {/* The status word already says it — a coloured square in front of it
+              was the same fact twice. */}
+          <span
+            className={`shrink-0 font-mini text-[10px] ${
+              job.status === "running" ? "text-[var(--accent)]" : "text-[var(--text-dim)]"
+            }`}
+          >
+            {JOB_STATUS[job.status] ?? job.status}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -325,21 +269,109 @@ function JobSection({ jobs }: { jobs: JobEntry[] }) {
  * 纯属自作聪明——点「计划」冒出「目标」，谁都看不懂。要定目标就 `/goal <内容>`，
  * 那是 dsh 自己注册的命令，斜杠菜单里本来就有。
  */
+interface Panel {
+  key: string;
+  title: string;
+  count: string;
+  right?: React.ReactNode;
+  body: React.ReactNode;
+}
+
+/** 跑完的后台任务不会从列表里消失，所以这儿自己挑：还在动的，或者出了事的。 */
+const JOB_LIVE = new Set(["running", "stopping", "failed"]);
+
 export function SessionStrip({ kernel }: { kernel: Kernel }) {
-  const { goal, todos, subagents, jobs } = kernel;
-  if (!goal && todos.length === 0 && subagents.length === 0 && jobs.length === 0) {
-    return null;
+  const { goal, subagents, isStreaming } = kernel;
+  const [closed, setClosed] = useState<Record<string, boolean>>({ subagents: true, jobs: true });
+  const toggle = (key: string) => setClosed((held) => ({ ...held, [key]: !held[key] }));
+
+  /* 待办是模型这一轮的清单，dsh 要到下一轮开始才清空。轮次结束之后它既不会再变，
+     也不代表现在在做什么——留着就是一条永远不会消失的旧账。 */
+  const todos = isStreaming ? kernel.todos : [];
+  const jobs = kernel.jobs.filter((job) => JOB_LIVE.has(job.status));
+
+  const panels: Panel[] = [];
+  if (goal) {
+    const rounds = goal.maxGoalRounds > 0 ? ` ${goal.roundsStarted}/${goal.maxGoalRounds}` : "";
+    panels.push({
+      key: "goal",
+      title: "目标",
+      count: `${PHASE[goal.phase]}${rounds}`,
+      right: (
+        <>
+          {goal.phase === "active" && <MiniButton onClick={() => kernel.updateGoal("pause")}>暂停</MiniButton>}
+          {goal.phase === "paused" && <MiniButton onClick={() => kernel.updateGoal("resume")}>继续</MiniButton>}
+          {goal.phase !== "complete" && (
+            <MiniButton onClick={() => kernel.updateGoal("complete")}>完成</MiniButton>
+          )}
+          <MiniButton danger onClick={() => kernel.updateGoal("clear")}>
+            清除
+          </MiniButton>
+        </>
+      ),
+      body: <GoalBody goal={goal} />,
+    });
   }
+  if (todos.length > 0) {
+    const done = todos.filter((item) => item.status === "completed").length;
+    panels.push({
+      key: "todos",
+      title: "待办",
+      count: `${done}/${todos.length}`,
+      body: <TodoBody todos={todos} />,
+    });
+  }
+  if (subagents.length > 0) {
+    const running = subagents.filter((child) => child.activity === "running").length;
+    panels.push({
+      key: "subagents",
+      title: "子 Agent",
+      count: running > 0 ? `${running} 跑着 / ${subagents.length}` : `${subagents.length}`,
+      body: <SubagentBodyList kernel={kernel} subagents={subagents} />,
+    });
+  }
+  if (jobs.length > 0) {
+    const running = jobs.filter((job) => job.status === "running").length;
+    panels.push({
+      key: "jobs",
+      title: "后台任务",
+      count: running > 0 ? `${running} 跑着 / ${jobs.length}` : `${jobs.length}`,
+      body: <JobBody jobs={jobs} />,
+    });
+  }
+  if (panels.length === 0) return null;
 
   return (
     /* Same 820px column as the timeline, the queue strip and the composer —
-       a full-bleed box in the middle of a centred stack reads as a different app. */
+       a full-bleed box in the middle of a centred stack reads as a different app.
+
+       The heads share one row and the box is only as wide as it needs to be:
+       a section per row meant that with everything folded the strip was a stack
+       of 820px bars each holding one short label and a lot of nothing. */
     <div className="shrink-0 px-5 pb-1">
-      <div className="mx-auto max-w-[820px] border border-[var(--border-main)] bg-[var(--bg-surface)]">
-        {goal && <GoalSection kernel={kernel} goal={goal} />}
-        {todos.length > 0 && <TodoSection todos={todos} />}
-        {subagents.length > 0 && <SubagentSection kernel={kernel} subagents={subagents} />}
-        {jobs.length > 0 && <JobSection jobs={jobs} />}
+      <div className="mx-auto max-w-[820px]">
+        <div className="w-fit max-w-full border border-[var(--border-main)] bg-[var(--bg-surface)]">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 py-1">
+            {panels.map((panel) => (
+              <div key={panel.key} className="flex items-center gap-1.5">
+                <SectionHead
+                  title={panel.title}
+                  count={panel.count}
+                  open={!closed[panel.key]}
+                  onToggle={() => toggle(panel.key)}
+                />
+                {panel.right}
+              </div>
+            ))}
+          </div>
+          {panels
+            .filter((panel) => !closed[panel.key])
+            .map((panel) => (
+              <div key={panel.key} className="border-t border-[var(--border-main)] px-2 py-1">
+                {panel.body}
+              </div>
+            ))}
+        </div>
       </div>
     </div>
   );
