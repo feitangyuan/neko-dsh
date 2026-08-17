@@ -1,0 +1,26 @@
+[package]
+name = "neko-dsh"
+version = "0.1.0"
+description = "Neko — a Macintosh-style desktop for the DeepSeek Harness"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+# 定时任务只用日历换算，不需要时区数据库
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# 和运行时之间全程 127.0.0.1 明文 HTTP。TLS 只为首启那一次 key 校验，
+# 走系统钥匙串（macOS 上就是 Security.framework），不额外打包证书库
+reqwest = { version = "0.12", default-features = false, features = ["json", "native-tls"] }
+tokio = { version = "1", default-features = false, features = ["time"] }
+tokio-tungstenite = { version = "0.24", default-features = false, features = ["connect", "handshake"] }
+futures-util = { version = "0.3", default-features = false }
+
+[features]
+# 生产模式用自定义协议加载内嵌的 dist/，无端口、无服务器
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

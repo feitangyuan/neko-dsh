@@ -1,0 +1,612 @@
+@import "tailwindcss";
+
+/* Hallmark · genre: product UI · tone: classic Macintosh · anchor: lavender · macrostructure: three-pane desktop shell · contrast/icons/responsive: pass */
+
+/* 缝合像素字体（本地打包，Tauri 离线可用）：拉丁 + 简中统一点阵。
+ * 字体原生点阵字号为 12px/10px；UI 通过下方的字号覆盖放大到 16px/14px。无粗体。 */
+@font-face {
+  font-family: "Fusion Pixel";
+  src: url("../assets/fonts/fusion-pixel-12px.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fusion Pixel Mono";
+  src: url("../assets/fonts/fusion-pixel-12px-mono.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fusion Pixel Mini";
+  src: url("../assets/fonts/fusion-pixel-10px.woff2") format("woff2");
+  font-display: swap;
+}
+
+/*
+ * DSH GUI design tokens —「Platinum」经典 Mac OS 8/9 风
+ * 浅灰 chrome + 白纸 pane + 1px 黑边 + 纯偏移硬阴影。
+ * 单强调色 = Mac OS 8.5 Appearance 的薰衣草蓝紫。
+ * 默认浅色（Platinum）；深色 = 黑屏磷光终端（备选主题）。
+ */
+
+/* 默认：Platinum 浅色 */
+:root {
+  --chrome: #dfdfd8; /* 窗口灰 */
+  --chrome-hi: #ffffff; /* 高光（按钮面、输入框、菜单面） */
+  --chrome-lo: #b9b9b0; /* 暗面 */
+  --chrome-line: #c7c7be; /* pinstripe 线 */
+  --ink: #141412;
+  --ink-dim: #5d5d55;
+
+  --bg-base: #e8e8e2; /* 内容区灰 */
+  --bg-surface: #ffffff; /* 纸面 pane */
+  --bg-elevated: #f6f5ee;
+  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-active: rgba(0, 0, 0, 0.1);
+
+  --text-main: #161613;
+  --text-muted: #55554e;
+  --text-dim: #8f8f83;
+
+  --accent: #4b4ba6; /* Mac OS 8.5 薰衣草 */
+  --accent-strong: #3b3b8c;
+  --accent-soft: rgba(75, 75, 166, 0.13);
+  --on-accent: #ffffff;
+
+  --success: #2e7d32;
+  --error: #c0341d;
+  --warning: #8a6d1a;
+
+  --border-subtle: #cfcfc4;
+  --border-main: #a6a699;
+  --border-strong: #6e6e61;
+
+  --code-bg: #f3f2ea;
+
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
+
+  /* 硬阴影：纯偏移，不模糊 */
+  --shadow-pop: 3px 3px 0 rgba(0, 0, 0, 0.35);
+  --shadow-card: none;
+
+  --font-sans: "Fusion Pixel", "PingFang SC", sans-serif;
+  --font-mono: "Fusion Pixel Mono", "PingFang SC", monospace;
+  --font-mini: "Fusion Pixel Mini", "PingFang SC", sans-serif;
+  --ui-font-size: 16px;
+  --ui-mini-font-size: 14px;
+  /* 表单控件的统一高度。经典 Mac 的控件高度是系统常量，不是各写各的 padding：
+     一行里按钮、下拉、输入框、开关必须齐平，否则一眼就看出参差。
+     正文 16px 时汉字字形实高 14.67px，上下各留 3px 得 22px。 */
+  --ui-control-height: calc(var(--ui-font-size) + 6px);
+}
+
+/* 深色备选：黑屏磷光终端 */
+[data-theme="dark"] {
+  --chrome: #d0d0d0;
+  --chrome-hi: #ffffff;
+  --chrome-lo: #a8a8a8;
+  --chrome-line: #b5b5b5;
+  --ink: #111111;
+  --ink-dim: #555555;
+
+  --bg-base: #0d0f0c;
+  --bg-surface: #141613;
+  --bg-elevated: #1b1e1a;
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --bg-active: rgba(255, 255, 255, 0.1);
+
+  --text-main: #e9e7dd;
+  --text-muted: #9b9c8e;
+  --text-dim: #61645a;
+
+  --accent: #ffb000;
+  --accent-strong: #ffc34d;
+  --accent-soft: rgba(255, 176, 0, 0.13);
+  --on-accent: #0d0f0c;
+
+  --success: #7fca6a;
+  --error: #ff6a5e;
+  --warning: #e0b34c;
+
+  --border-subtle: #2b2e27;
+  --border-main: #3a3e34;
+  --border-strong: #4c5144;
+
+  --code-bg: #080a07;
+
+  --shadow-pop: 4px 4px 0 rgba(0, 0, 0, 0.45);
+  --shadow-card: none;
+}
+
+@theme inline {
+  --color-base: var(--bg-base);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-hover: var(--bg-hover);
+  --color-active: var(--bg-active);
+
+  --color-main: var(--text-main);
+  --color-muted: var(--text-muted);
+  --color-dim: var(--text-dim);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-mini: var(--font-mini);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: var(--ui-font-size);
+  line-height: 1.7;
+  overflow: hidden;
+}
+
+/* WebKit 的 font: inherit（preflight）对表单元素不可靠：input/textarea 会残留 UA 的
+   -webkit-small-control（≈11px 非像素回退字体）。显式钉死家族；字号仍由各 class 控制，
+   font-mini/font-mono 等 class 优先级高于本条元素规则。 */
+input,
+textarea {
+  font-family: var(--font-sans);
+}
+
+/* UI 字号：默认正文/等宽 16px、微标签 14px；设置 → 常规 → 界面字号 改这两个变量。
+ * 用覆盖 Tailwind 任意值的方式生效，避免全库改类名。
+ *
+ * 全库只有这四档。`text-[12px]` = 正文和标题，`text-[10px]` = 元信息，
+ * 下面两档是装饰性大字。任何别的 text-[Npx] 都不会被重映射，会按字面值渲染——
+ * 那意味着它比正文还小，几乎一定是写错了。图标字形（放在固定 px 方框里的单个符号）
+ * 是唯一例外，它们量的是方框不是字号。 */
+.text-\[12px\] {
+  font-size: var(--ui-font-size);
+}
+.text-\[10px\] {
+  font-size: var(--ui-mini-font-size);
+}
+.text-\[22px\] {
+  font-size: calc(var(--ui-font-size) + 6px);
+}
+.text-\[28px\] {
+  font-size: calc(var(--ui-font-size) + 12px);
+}
+
+/* 时间线底部步进淡出：经典 Mac 没有 alpha 渐变，用不透明度递减的等宽色带
+   模拟「溶解」——滚动文字在输入区上方逐阶淡出，而不是被切成半行。 */
+.timeline-fade {
+  height: 14px;
+  background: linear-gradient(
+    to top,
+    var(--bg-surface) 0 16.6%,
+    color-mix(in srgb, var(--bg-surface) 80%, transparent) 16.6% 33.3%,
+    color-mix(in srgb, var(--bg-surface) 60%, transparent) 33.3% 50%,
+    color-mix(in srgb, var(--bg-surface) 40%, transparent) 50% 66.6%,
+    color-mix(in srgb, var(--bg-surface) 20%, transparent) 66.6% 83.3%,
+    transparent 83.3% 100%
+  );
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* 经典 Mac 滚动条：灰槽 + 浅块 + 黑边 */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: var(--chrome) var(--chrome-line);
+}
+*::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+  background: var(--chrome-line);
+  border-left: 1px solid var(--border-main);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--chrome);
+  border: 1px solid var(--ink);
+  border-radius: 0;
+}
+*::-webkit-scrollbar-track {
+  background: var(--chrome-line);
+}
+*::-webkit-scrollbar-corner {
+  background: var(--chrome-line);
+}
+
+/* Keep project rows aligned when a long session list starts scrolling. */
+.sidebar-scroll {
+  scrollbar-width: none;
+}
+.sidebar-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+
+
+/* 经典 Mac 标题栏 pinstripe（横细线） */
+.pinstripes {
+  background-color: var(--chrome);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--chrome) 0px,
+    var(--chrome) 1px,
+    var(--chrome-line) 1px,
+    var(--chrome-line) 2px
+  );
+}
+
+/* 经典 Mac 按钮：白面黑边微圆角，默认按钮双线框 */
+.mac-btn {
+  font-family: var(--font-sans);
+  font-size: var(--ui-font-size);
+  color: var(--ink);
+  background: var(--chrome-hi);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-md);
+  /* 高度钉死，不由字形撑起：同一行里「更换」（纯拉丁，字形实高 12px）和
+     「选择…」（含汉字，14.67px）否则会差出 2px 来。 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--ui-control-height);
+  padding: 0 14px;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  user-select: none;
+}
+.mac-btn:hover {
+  background: var(--chrome);
+}
+.mac-btn:active {
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+.mac-btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.mac-btn-primary {
+  box-shadow:
+    inset 0 0 0 1px var(--chrome-hi),
+    inset 0 0 0 2px var(--ink),
+    2px 2px 0 rgba(0, 0, 0, 0.45);
+}
+.mac-btn-primary:active {
+  box-shadow: inset 0 0 0 1px var(--chrome-hi), inset 0 0 0 2px var(--ink);
+}
+
+/* Shared compact form control for settings and scheduled-task windows. */
+.field-input {
+  width: 100%;
+  border: 1px solid var(--ink);
+  background: var(--chrome-hi);
+  color: var(--ink);
+  height: var(--ui-control-height);
+  padding: 0 7px;
+  font-size: var(--ui-font-size);
+  outline: none;
+}
+/* 多行输入按内容走，高度常量只管单行控件。 */
+textarea.field-input {
+  height: auto;
+  padding: 4px 7px;
+}
+.field-input::placeholder {
+  color: var(--ink-dim);
+}
+.field-input:hover {
+  background: var(--bg-elevated);
+}
+.field-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.field-input:disabled {
+  opacity: 0.45;
+}
+
+/* Dialog controls share one square, one-pixel Macintosh border language. */
+.mac-dialog .mac-btn,
+.mac-dialog .dialog-button,
+.mac-dialog .field-input,
+.mac-dialog .mac-toggle {
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--ink);
+  border-radius: 0;
+}
+.mac-dialog .mac-btn,
+.mac-dialog .dialog-button {
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+}
+.mac-dialog .mac-btn:active,
+.mac-dialog .dialog-button:active {
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+.mac-toggle {
+  position: relative;
+  width: 38px;
+  height: var(--ui-control-height);
+  flex: 0 0 auto;
+  border: 1px solid var(--ink);
+  background: var(--chrome);
+}
+.mac-toggle.is-on {
+  background: var(--accent);
+}
+.mac-toggle > span {
+  /* 滑块跟着轨道高度走，两侧各留 2px。 */
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: 12px;
+  border: 1px solid var(--ink);
+  background: var(--chrome-hi);
+}
+.mac-toggle.is-on > span {
+  left: 22px;
+}
+.mac-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* 经典 Mac 进度条：白底黑边 + 斜条纹填充（ctx 用量条） */
+.mac-meter {
+  display: inline-block;
+  width: 64px;
+  height: 10px;
+  border: 1px solid var(--ink);
+  background: var(--chrome-hi);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+}
+.mac-meter > i {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(45deg, var(--accent) 0 2px, transparent 2px 4px);
+}
+.mac-meter-warn > i {
+  background: repeating-linear-gradient(45deg, var(--warning) 0 2px, transparent 2px 4px);
+}
+.mac-meter-hot > i {
+  background: repeating-linear-gradient(45deg, var(--error) 0 2px, transparent 2px 4px);
+}
+
+/* 流式光标：方块 █ */
+.streaming-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: -0.1em;
+  background: var(--accent);
+  animation: cursor-blink 1s steps(2, start) infinite;
+}
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* 运行态：方块脉冲 */
+.pulse-dot {
+  animation: pulse-dot 1.1s steps(2, end) infinite;
+}
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* 思考中：◐ 旋转 */
+.spin {
+  animation: spin 0.9s steps(4) infinite;
+  display: inline-block;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 折叠展开：grid 行高过渡 */
+.collapse-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.18s ease;
+}
+.collapse-grid.open {
+  grid-template-rows: 1fr;
+}
+.collapse-grid > div {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.overlay-in {
+  animation: overlay-in 0.08s steps(2);
+}
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.toast-in {
+  animation: toast-in 0.1s steps(2);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streaming-cursor,
+  .pulse-dot,
+  .spin,
+  .overlay-in,
+  .toast-in {
+    animation: none;
+  }
+
+  .collapse-grid {
+    transition: none;
+  }
+}
+
+kbd {
+  font-family: var(--font-mini);
+  font-size: var(--ui-mini-font-size);
+  color: var(--text-dim);
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius-sm);
+  padding: 0 4px;
+  line-height: 1.5;
+}
+
+/* 右侧本地 Markdown 预览：CommonMark + GFM 结构样式。 */
+.markdown-preview {
+  color: var(--text-main);
+  font-size: var(--ui-font-size);
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.markdown-preview > :first-child {
+  margin-top: 0;
+}
+.markdown-preview > :last-child {
+  margin-bottom: 0;
+}
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4 {
+  margin: 1.25em 0 0.55em;
+  color: var(--text-main);
+  line-height: 1.35;
+}
+.markdown-preview h1 {
+  border-bottom: 1px solid var(--border-main);
+  padding-bottom: 0.25em;
+  font-size: calc(var(--ui-font-size) + 6px);
+}
+.markdown-preview h2 {
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.2em;
+  font-size: calc(var(--ui-font-size) + 4px);
+}
+.markdown-preview h3 {
+  font-size: calc(var(--ui-font-size) + 2px);
+}
+.markdown-preview p,
+.markdown-preview ul,
+.markdown-preview ol,
+.markdown-preview blockquote,
+.markdown-preview table,
+.markdown-preview pre {
+  margin: 0.7em 0;
+}
+.markdown-preview ul,
+.markdown-preview ol {
+  padding-left: 1.7em;
+}
+.markdown-preview ul {
+  list-style: square;
+}
+.markdown-preview ol {
+  list-style: decimal;
+}
+.markdown-preview li + li {
+  margin-top: 0.2em;
+}
+.markdown-preview blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.8em;
+  color: var(--text-muted);
+}
+.markdown-preview code {
+  border: 1px solid var(--border-main);
+  background: var(--code-bg);
+  padding: 1px 4px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+.markdown-preview pre {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  background: var(--code-bg);
+  padding: 0.75em;
+}
+.markdown-preview pre code {
+  border: 0;
+  padding: 0;
+  color: var(--text-main);
+}
+.markdown-preview table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.markdown-preview th,
+.markdown-preview td {
+  border: 1px solid var(--border-main);
+  padding: 0.35em 0.55em;
+  text-align: left;
+}
+.markdown-preview th {
+  background: var(--chrome);
+  color: var(--ink);
+}
+.markdown-preview a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.markdown-preview hr {
+  margin: 1em 0;
+  border: 0;
+  border-top: 1px solid var(--border-main);
+}
+.markdown-preview img {
+  max-width: 100%;
+}
+.markdown-preview strong {
+  background: var(--accent-soft);
+  padding: 0 0.15em;
+}
+
+/* Assistant messages use the same GFM renderer with tighter chat spacing. */
+.markdown-message p,
+.markdown-message ul,
+.markdown-message ol,
+.markdown-message blockquote,
+.markdown-message table,
+.markdown-message pre {
+  margin: 0.5em 0;
+}

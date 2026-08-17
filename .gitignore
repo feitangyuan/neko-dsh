@@ -1,0 +1,15 @@
+node_modules/
+dist/
+
+# Bundled runtime — rebuilt by `npm run runtime:fetch`, never committed
+src-tauri/binaries/
+src-tauri/runtime/
+src-tauri/resources/dsh-version.txt
+
+src-tauri/target/
+src-tauri/gen/
+
+# Dropped here by plugins whenever a session runs with this repo as its cwd
+.dsh_better_edit/
+
+.DS_Store
