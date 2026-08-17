@@ -33,10 +33,10 @@ interface Props {
 export function NekoFace({ scale, ink, paper, sclera, hoverEyes, children }: Props) {
   const [hover, setHover] = useState(false);
   const [blink, setBlink] = useState(false);
-  /* 静止时看正前方——app 图标就是这一帧，两处得对得上 */
-  const [gaze, setGaze] = useState<[number, number]>([0, 0]);
+  /* 静止时眼珠朝右下——app 图标就是这一帧，两处得对得上 */
+  const [gaze, setGaze] = useState<[number, number]>([1, 1]);
   const ref = useRef<HTMLDivElement>(null);
-  const gazeRef = useRef<[number, number]>([0, 0]);
+  const gazeRef = useRef<[number, number]>([1, 1]);
 
   /* 眨眼：每 2.6–5s 一次，闭 160ms */
   useEffect(() => {

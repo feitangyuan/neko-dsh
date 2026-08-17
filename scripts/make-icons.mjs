@@ -46,9 +46,10 @@ const ink = new Set(ring);
 for (const [y, x] of art.mouth) ink.add(`${y}:${x}`);
 
 const UNIT = art.eye.unit;
-/* The icon is one frame of the same cat the title bar animates, so the pupils
-   look straight ahead: dead centre of the white. */
-const PUPIL = [1 + 1, 1 + 1];
+/* The icon is one frame of the same cat the window animates, so it has to be a
+   pose the live one actually rests in: pupils down-right, which is
+   `pupilAt([1, 1])` in nekoArt — bottom-right corner of the white. */
+const PUPIL = [3, 3];
 
 /** Half-cell lookup inside one eye. Returns ink / paper / null (= face). */
 function eyeAt(dy, dx) {
